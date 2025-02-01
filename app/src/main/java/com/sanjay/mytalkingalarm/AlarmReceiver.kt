@@ -13,7 +13,11 @@ class AlarmReceiver : BroadcastReceiver() {
 
         // Start the AlarmService to handle the speaking task
         val serviceIntent = Intent(context, AlarmService::class.java)
-        serviceIntent.putExtra("message", "Wake up! It's time!")
+        val message = intent.getStringExtra("message") ?: "Wake up! It's time!"
+        val repeatCount = intent.getIntExtra("repeat", 1)
+
+        serviceIntent.putExtra("message", message)
+        serviceIntent.putExtra("repeat", repeatCount)
         context.startForegroundService(serviceIntent)
     }
 }
