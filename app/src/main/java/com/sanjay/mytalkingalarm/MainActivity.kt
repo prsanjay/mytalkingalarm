@@ -30,6 +30,7 @@ import android.app.PendingIntent
 
 
 class MainActivity : ComponentActivity() {
+    private lateinit var alarmServiceIntent: Intent
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -99,21 +100,21 @@ class MainActivity : ComponentActivity() {
             Spacer(modifier = Modifier.height(16.dp))
 
             // Repeat Count Input Field
-            Text("Repeat Count:")
-            Box(
-                modifier = Modifier
-                    .width(50.dp)
-                    .background(Color.LightGray)
-                    .padding(8.dp)
-            ) {
-                BasicTextField(
-                    value = repeatCount,
-                    onValueChange = { if (it.length <= 2) repeatCount = it },
-                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                )
-            }
+//            Text("Repeat Count:")
+//            Box(
+//                modifier = Modifier
+//                    .width(50.dp)
+//                    .background(Color.LightGray)
+//                    .padding(8.dp)
+//            ) {
+//                BasicTextField(
+//                    value = repeatCount,
+//                    onValueChange = { if (it.length <= 2) repeatCount = it },
+//                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+//                )
+//            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            //Spacer(modifier = Modifier.height(16.dp))
 
             // Button to Set Alarm
             Button(
@@ -125,6 +126,15 @@ class MainActivity : ComponentActivity() {
                 }
             ) {
                 Text("Set Alarm")
+            }
+
+            // Dismiss alarm button
+            Button(
+                onClick = {
+                    context.stopService(alarmServiceIntent)  // Stop the service to dismiss the alarm
+                }
+            ) {
+                Text("Dismiss Alarm")
             }
         }
     }

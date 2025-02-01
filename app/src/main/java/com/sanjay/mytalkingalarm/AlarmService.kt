@@ -59,42 +59,34 @@ class AlarmService : Service(), TextToSpeech.OnInitListener {
                 }.start()
             }
         }
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
     private fun speakMessage(message: String, repeatCount: Int) {
         tts.setSpeechRate(0.7f)
-        CoroutineScope(Dispatchers.IO).launch {
-            var remainingCount = repeatCount
-
-            // Set up the listener for utterance completion
-            tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                override fun onStart(utteranceId: String?) {
-                    // Nothing to do when speech starts
+        isAlarmDismissed = false
+        val result = tts.setLanguage(Locale("gu", "IN"))
+        // Start the repeating process
+        CoroutineScope(Dispatchers.Main).launch {
+            while (!isAlarmDismissed) {
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    Log.e("TTS", "Language not supported!")
+                } else {
+                    tts.speak(message, TextToSpeech.QUEUE_ADD, null, null)
                 }
 
-                override fun onDone(utteranceId: String?) {
-                    // When the speech is done, trigger the next repetition
-                    if (remainingCount > 1) {
-                        remainingCount--
-                        CoroutineScope(Dispatchers.Main).launch {
-                            delay(1000)  // 1-second delay between repetitions
-                            tts.speak(message, TextToSpeech.QUEUE_ADD, null, null)
-                        }
-                    }
-                }
-
-                override fun onError(utteranceId: String?) {
-                    // Handle error if speech fails
-                }
-            })
-
-            // Start the first repetition
-            withContext(Dispatchers.Main) {
-                tts.speak(message, TextToSpeech.QUEUE_FLUSH, null, null)
+                //tts.speak(message, TextToSpeech.QUEUE_FLUSH, null, null)
+                delay(1000) // Optional delay between repetitions (1 second here)
             }
-        }
 
+            Log.d("AlarmService", "Alarm dismissed, stopping the message.")
+        }
+    }
+
+    // Function to stop the alarm and dismiss the message
+    fun dismissAlarm() {
+        isAlarmDismissed = true
+        tts.stop()  // Stop the TextToSpeech engine
     }
 
     override fun onDestroy() {
