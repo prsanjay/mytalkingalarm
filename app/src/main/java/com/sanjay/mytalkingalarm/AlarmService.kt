@@ -7,12 +7,14 @@ import android.os.IBinder
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import java.util.*
+import kotlinx.coroutines.*
+import android.speech.tts.UtteranceProgressListener
 
 class AlarmService : Service(), TextToSpeech.OnInitListener {
 
     private lateinit var tts: TextToSpeech
     private var isTTSInitialized = false // ✅ Track if TTS is ready
-
+    private var isAlarmDismissed = false
     override fun onCreate() {
         super.onCreate()
         Log.d("AlarmService", "Service created")
@@ -42,30 +44,49 @@ class AlarmService : Service(), TextToSpeech.OnInitListener {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.let {
             val message = it.getStringExtra("message") ?: "Time's up!"
+            val repeatCount = it.getIntExtra("repeat", 1)
             Log.d("AlarmService", "Received message: $message")
 
             if (isTTSInitialized) {
-                speakMessage(message) // ✅ Speak immediately if ready
+                speakMessage(message, repeatCount) // ✅ Speak immediately if ready
             } else {
                 // ✅ Wait for TTS to initialize, then speak
                 Thread {
                     while (!isTTSInitialized) {
                         Thread.sleep(100) // Wait for TTS to be ready
                     }
-                    speakMessage(message)
+                    speakMessage(message, repeatCount)
                 }.start()
             }
         }
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
-    private fun speakMessage(message: String) {
-        if (isTTSInitialized) {
-            Log.d("AlarmService", "Speaking message: $message")
-            tts.speak(message, TextToSpeech.QUEUE_FLUSH, null, null)
-        } else {
-            Log.e("TTS", "TTS is not initialized yet, cannot speak!")
+    private fun speakMessage(message: String, repeatCount: Int) {
+        tts.setSpeechRate(0.7f)
+        isAlarmDismissed = false
+        val result = tts.setLanguage(Locale("gu", "IN"))
+        // Start the repeating process
+        CoroutineScope(Dispatchers.Main).launch {
+            while (!isAlarmDismissed) {
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    Log.e("TTS", "Language not supported!")
+                } else {
+                    tts.speak(message, TextToSpeech.QUEUE_ADD, null, null)
+                }
+
+                //tts.speak(message, TextToSpeech.QUEUE_FLUSH, null, null)
+                delay(1000) // Optional delay between repetitions (1 second here)
+            }
+
+            Log.d("AlarmService", "Alarm dismissed, stopping the message.")
         }
+    }
+
+    // Function to stop the alarm and dismiss the message
+    fun dismissAlarm() {
+        isAlarmDismissed = true
+        tts.stop()  // Stop the TextToSpeech engine
     }
 
     override fun onDestroy() {
