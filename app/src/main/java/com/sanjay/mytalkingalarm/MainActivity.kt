@@ -5,15 +5,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import java.util.*
 import android.content.Context
-import android.util.Log
 import android.widget.Toast
-
-
-
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
